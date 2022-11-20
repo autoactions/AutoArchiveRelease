@@ -1,17 +1,56 @@
 on:
   rss:
-    url: https://hnrss.org/newest?points=300&count=3
+    url: ${{ secrets.RSS_FEED }}
+    config:
+      filter:
+        title:
+          $regex: released
 jobs:
-  print:
-    name: Print
+  request:
+    name: Request
     runs-on: ubuntu-latest
     steps:
-      - name: Print Outputs
-        env:
-          title: ${{on.rss.outputs.title}}
-          contentSnippet: ${{on.rss.outputs.contentSnippet}}
-          link: ${{on.rss.outputs.link}}
-        run: |
-          echo title: $title
-          echo contentSnippet: $contentSnippet
-          echo link: $link
+      - name: Get the latest release
+        uses: indiesdev/curl@v1.1
+        id: api
+        with:
+          url: ${{ secrets.URL }}
+          method: "GET"
+          accept: 200
+          body: ''
+          log-response: true
+      - name: Download zip
+        uses: actionsflow/axios@main
+        with:
+          url: ${{ secrets.ARIA2RPC }}
+          method: POST
+          body: |
+            {
+              "jsonrpc":"2.0", 
+              "method":"aria2.addUri",
+              "id":"qwer",
+              "params":["token:${{ secrets.TOKEN }}",[
+              "${{ fromJSON(steps.api.outputs.response).data[0].assets[0].browser_download_url }}"
+              ],{"dir":"${{ secrets.DOWNLOAD_DIR }}/${{ fromJSON(steps.api.outputs.response).data[0].tag_name }}"}]
+            }
+      - name: Download Source Code
+        uses: actionsflow/axios@main
+        with:
+          url: ${{ secrets.ARIA2RPC }}
+          method: POST
+          body: |
+            {
+              "jsonrpc":"2.0", 
+              "method":"aria2.addUri",
+              "id":"qwer",
+              "params":["token:${{ secrets.TOKEN }}",[
+              "${{ fromJSON(steps.api.outputs.response).data[0].zipball_url }}"
+              ],{"dir":"${{ secrets.DOWNLOAD_DIR }}/${{ fromJSON(steps.api.outputs.response).data[0].tag_name }}"}]
+            }
+      - name: Send Telegram Message
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            New Released: ${{ fromJSON(steps.api.outputs.response).data[0].name }}
