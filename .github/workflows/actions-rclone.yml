@@ -1,0 +1,16 @@
+name: ActionsRclone
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *"
+jobs:
+  request:
+    name: Request
+    runs-on: ubuntu-latest
+    steps:
+      - name: rclone
+        uses: wei/rclone@v1
+        env:
+          RCLONE_CONF: ${{ secrets.RCLONE_CONF }}
+        with:
+          args: move ${{ secrets.SOURCE_PATH }} ${{ secrets.DEST_PATH }} --delete-empty-src-dirs
