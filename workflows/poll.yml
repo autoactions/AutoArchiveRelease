@@ -50,4 +50,4 @@ jobs:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
-            New Released: ${{ on.poll.outputs.name }} }}
+            New Released: ${{ on.poll.outputs.name }}
