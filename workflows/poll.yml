@@ -1,24 +1,21 @@
 on:
-  rss:
-    url: ${{ secrets.RSS_FEED }}
+  poll:
+    url: ${{ secrets.API }}
+    shouldIncludeBody: true
     config:
-      filter:
-        title:
-          $regex: released
+      limit: 5
 jobs:
-  request:
-    name: Request
+  print:
+    name: Print
     runs-on: ubuntu-latest
     steps:
-      - name: Get the latest release
-        uses: indiesdev/curl@v1.1
-        id: api
-        with:
-          url: ${{ secrets.URL }}
-          method: "GET"
-          accept: 200
-          body: ''
-          log-response: true
+      - name: Print Info
+        env:
+          DOWNLOAD_URL: ${{ on.poll.outputs.assets[0].browser_download_url }}
+          TAG_NAME: ${{ on.poll.outputs.tag_name }}
+        run: |
+          echo "DOWNLOAD_URL: $DOWNLOAD_URL"
+          echo "TAG_NAME: $TAG_NAME"
       - name: Download zip
         uses: actionsflow/axios@main
         with:
@@ -30,8 +27,8 @@ jobs:
               "method":"aria2.addUri",
               "id":"qwer",
               "params":["token:${{ secrets.TOKEN }}",[
-              "${{ fromJSON(steps.api.outputs.response).data[0].assets[0].browser_download_url }}"
-              ],{"dir":"${{ secrets.DOWNLOAD_DIR }}/${{ fromJSON(steps.api.outputs.response).data[0].tag_name }}"}]
+              "${{ on.poll.outputs.assets[0].browser_download_url }}"
+              ],{"dir":"${{ secrets.DOWNLOAD_DIR }}/${{ on.poll.outputs.tag_name }}"}]
             }
       - name: Download Source Code
         uses: actionsflow/axios@main
@@ -44,8 +41,8 @@ jobs:
               "method":"aria2.addUri",
               "id":"qwer",
               "params":["token:${{ secrets.TOKEN }}",[
-              "${{ fromJSON(steps.api.outputs.response).data[0].zipball_url }}"
-              ],{"dir":"${{ secrets.DOWNLOAD_DIR }}/${{ fromJSON(steps.api.outputs.response).data[0].tag_name }}"}]
+              "${{ on.poll.outputs.assets[0].zipball_url }}"
+              ],{"dir":"${{ secrets.DOWNLOAD_DIR }}/${{ on.poll.outputs.tag_name }}"}]
             }
       - name: Send Telegram Message
         uses: appleboy/telegram-action@master
