@@ -1,7 +1,7 @@
 on:
   poll:
     url: ${{ secrets.API }}
-    shouldIncludeBody: true
+    deduplicationKey: id
     config:
       limit: 5
 jobs:
