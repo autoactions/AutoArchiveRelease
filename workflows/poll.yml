@@ -41,7 +41,7 @@ jobs:
               "method":"aria2.addUri",
               "id":"qwer",
               "params":["token:${{ secrets.TOKEN }}",[
-              "${{ on.poll.outputs.assets[0].zipball_url }}"
+              "${{ on.poll.outputs.zipball_url }}"
               ],{"dir":"${{ secrets.DOWNLOAD_DIR }}/${{ on.poll.outputs.tag_name }}"}]
             }
       - name: Send Telegram Message
